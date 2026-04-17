@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+    <title>我的文件库</title>
+    <link rel="stylesheet" href="./assets/style.css" />
+  </head>
+  <body>
+    <div id="appShell" class="shell" hidden>
+      <header class="topbar">
+        <div class="brand">
+          <div class="brand__title">我的文件库</div>
+          <div class="brand__subtitle">在线预览 · 可选下载</div>
+        </div>
+        <div class="actions">
+          <button id="logoutBtn" class="btn btn--ghost" type="button">退出</button>
+        </div>
+      </header>
+
+      <main class="main">
+        <section class="panel">
+          <div class="panel__row">
+            <input id="searchInput" class="input" placeholder="搜索：标题 / 标签 / 类型" />
+            <select id="typeSelect" class="select" aria-label="按类型筛选">
+              <option value="">全部类型</option>
+              <option value="pdf">PDF</option>
+              <option value="word">Word</option>
+              <option value="excel">Excel</option>
+              <option value="ppt">PPT</option>
+              <option value="other">其他</option>
+            </select>
+          </div>
+          <div class="hint" id="statusHint">正在加载文件列表…</div>
+        </section>
+
+        <section class="list" id="fileList" aria-live="polite"></section>
+      </main>
+
+      <footer class="footer">
+        <span>提示：这是静态站点的“入口加锁”。更强隐私请配合 OneDrive 的“仅你可访问”分享设置。</span>
+        <a class="link" href="./tools/hash.html" target="_blank" rel="noreferrer">生成/更换密码哈希</a>
+      </footer>
+    </div>
+
+    <div id="lockScreen" class="lock">
+      <div class="lock__card">
+        <div class="lock__title">请输入密码</div>
+        <div class="lock__desc">用于打开你的个人文件库入口页</div>
+
+        <form id="loginForm" class="lock__form">
+          <input
+            id="passwordInput"
+            class="input input--big"
+            type="password"
+            autocomplete="current-password"
+            placeholder="密码"
+            required
+          />
+          <button class="btn btn--primary btn--big" type="submit">进入</button>
+        </form>
+
+        <div id="loginError" class="error" hidden>密码不正确，请重试。</div>
+        <div class="lock__meta">
+          <div>默认密码：<code>changeme123</code>（建议部署后立即更换）</div>
+          <div class="muted">更换方式：打开“生成/更换密码哈希”，把哈希粘到 <code>assets/config.js</code>。</div>
+        </div>
+      </div>
+    </div>
+
+    <script src="./assets/config.js"></script>
+    <script src="./assets/app.js" type="module"></script>
+  </body>
+</html>
