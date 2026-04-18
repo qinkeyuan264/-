@@ -24,19 +24,58 @@ function getConfig() {
   };
 }
 
+function readStoredAuth() {
+  try {
+    return localStorage.getItem(LOCK_KEY);
+  } catch {
+    return null;
+  }
+}
+
+function readSessionAuth() {
+  try {
+    return sessionStorage.getItem(LOCK_KEY);
+  } catch {
+    return null;
+  }
+}
+
 function setAuthed(hash) {
   const { authCacheDays } = getConfig();
   const expiresAt = Date.now() + Math.max(1, authCacheDays) * 24 * 60 * 60 * 1000;
-  localStorage.setItem(LOCK_KEY, JSON.stringify({ hash, expiresAt }));
+  const payload = JSON.stringify({ hash, expiresAt });
+  try {
+    localStorage.setItem(LOCK_KEY, payload);
+    return;
+  } catch {
+    /* 无痕模式等会禁止 localStorage，改用 sessionStorage */
+  }
+  try {
+    sessionStorage.setItem(LOCK_KEY, payload);
+  } catch (e) {
+    const msg = e?.message || String(e);
+    throw new Error(
+      `无法保存登录状态（${msg}）。请关闭无痕/隐私模式，或在浏览器设置里允许本站使用“本地存储”，然后重试。`
+    );
+  }
 }
 
 function clearAuthed() {
-  localStorage.removeItem(LOCK_KEY);
+  try {
+    localStorage.removeItem(LOCK_KEY);
+  } catch {
+    /* ignore */
+  }
+  try {
+    sessionStorage.removeItem(LOCK_KEY);
+  } catch {
+    /* ignore */
+  }
 }
 
 function isAuthed() {
   const { passwordHash } = getConfig();
-  const raw = localStorage.getItem(LOCK_KEY);
+  const raw = readStoredAuth() || readSessionAuth();
   if (!raw) return false;
   try {
     const { hash, expiresAt } = JSON.parse(raw);
@@ -49,13 +88,21 @@ function isAuthed() {
 }
 
 function showApp() {
-  $("#lockScreen").hidden = true;
-  $("#appShell").hidden = false;
+  const lock = $("#lockScreen");
+  const shell = $("#appShell");
+  lock.hidden = true;
+  lock.style.setProperty("display", "none");
+  shell.hidden = false;
+  shell.style.removeProperty("display");
 }
 
 function showLock() {
-  $("#appShell").hidden = true;
-  $("#lockScreen").hidden = false;
+  const lock = $("#lockScreen");
+  const shell = $("#appShell");
+  shell.hidden = true;
+  shell.style.setProperty("display", "none");
+  lock.hidden = false;
+  lock.style.removeProperty("display");
 }
 
 function normalizeType(t) {
@@ -211,8 +258,14 @@ async function initApp() {
       $("#loginError").hidden = false;
       return;
     }
-    setAuthed(hash);
-    showApp();
+    try {
+      setAuthed(hash);
+      showApp();
+    } catch (err) {
+      $("#loginError").textContent =
+        err?.message || "登录状态保存失败，请换用普通窗口或 Chrome/Edge 再试。";
+      $("#loginError").hidden = false;
+    }
   });
 
   let files = [];
