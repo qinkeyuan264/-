@@ -3,7 +3,7 @@
 // 更换方法：打开 /tools/hash.html 生成哈希，然后替换 PASSWORD_SHA256_HEX。
 window.__SITE_CONFIG__ = {
   PASSWORD_SHA256_HEX:
-    "312332d0575efcc1c5aa536d2b7a12be8d71d5fbc6dacd46e06ecaeb0f638e5b",
+    "eea581a6b3e3433c1dd77b8714c24431196ee67761312e56f5596e314b2ae621",
   AUTH_CACHE_DAYS: 7,
   FILES_JSON_PATH: "./data/files.json",
 };
