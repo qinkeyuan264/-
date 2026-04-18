@@ -3,6 +3,9 @@ const $ = (sel) => document.querySelector(sel);
 /* v2：与旧 key 隔离，避免历史上写入的 localStorage 长期免密 */
 const LOCK_KEY = "personal_file_site_auth_v2";
 
+/** every_visit：仅内存，刷新/重进即需重登；session：sessionStorage；remember7：7 天 localStorage */
+let volatileLoginHash = null;
+
 function hexFromBuffer(buffer) {
   const bytes = new Uint8Array(buffer);
   let hex = "";
@@ -16,29 +19,66 @@ async function sha256Hex(text) {
   return hexFromBuffer(digest);
 }
 
+function resolveAuthMode() {
+  const cfg = window.__SITE_CONFIG__ || {};
+  const explicit = String(cfg.AUTH_MODE || "")
+    .trim()
+    .toLowerCase();
+  if (explicit === "every_visit" || explicit === "session" || explicit === "remember7") {
+    return explicit;
+  }
+  if (Number(cfg.AUTH_CACHE_DAYS) > 0) return "remember7";
+  return "every_visit";
+}
+
 function getConfig() {
   const cfg = window.__SITE_CONFIG__ || {};
   return {
     passwordHash: String(cfg.PASSWORD_SHA256_HEX || "").trim().toLowerCase(),
-    /* 0 = 仅本次浏览器会话（关闭浏览器/新会话需重登）；>0 = 用 localStorage 免密若干天 */
-    authCacheDays: Number.isFinite(cfg.AUTH_CACHE_DAYS) ? cfg.AUTH_CACHE_DAYS : 0,
+    authMode: resolveAuthMode(),
     filesJsonPath: String(cfg.FILES_JSON_PATH || "./data/files.json")
   };
 }
 
-/** 与配置一致：若选择“会话登录”，清掉可能残留的 localStorage，避免一打开就像已登录 */
+/** 按模式清理“另一种模式”的残留，避免串模式后仍像已登录 */
 function applyAuthPolicy() {
-  const { authCacheDays } = getConfig();
-  if (authCacheDays > 0) return;
-  try {
-    localStorage.removeItem(LOCK_KEY);
-  } catch {
-    /* ignore */
-  }
+  const mode = resolveAuthMode();
   try {
     localStorage.removeItem("personal_file_site_auth_v1");
   } catch {
     /* ignore */
+  }
+
+  if (mode === "every_visit") {
+    try {
+      localStorage.removeItem(LOCK_KEY);
+    } catch {
+      /* ignore */
+    }
+    try {
+      sessionStorage.removeItem(LOCK_KEY);
+    } catch {
+      /* ignore */
+    }
+    volatileLoginHash = null;
+    return;
+  }
+
+  if (mode === "session") {
+    try {
+      localStorage.removeItem(LOCK_KEY);
+    } catch {
+      /* ignore */
+    }
+    return;
+  }
+
+  if (mode === "remember7") {
+    try {
+      sessionStorage.removeItem(LOCK_KEY);
+    } catch {
+      /* ignore */
+    }
   }
 }
 
@@ -59,14 +99,28 @@ function readSessionAuth() {
 }
 
 function setAuthed(hash) {
-  const { authCacheDays } = getConfig();
-  const persist = authCacheDays > 0;
-  const expiresAt = persist
-    ? Date.now() + Math.max(1, authCacheDays) * 24 * 60 * 60 * 1000
-    : Date.now() + 365 * 24 * 60 * 60 * 1000;
-  const payload = JSON.stringify({ hash, expiresAt, persist });
+  const mode = resolveAuthMode();
 
-  if (persist) {
+  if (mode === "every_visit") {
+    volatileLoginHash = hash;
+    try {
+      localStorage.removeItem(LOCK_KEY);
+    } catch {
+      /* ignore */
+    }
+    try {
+      sessionStorage.removeItem(LOCK_KEY);
+    } catch {
+      /* ignore */
+    }
+    return;
+  }
+
+  volatileLoginHash = null;
+
+  if (mode === "remember7") {
+    const expiresAt = Date.now() + 7 * 24 * 60 * 60 * 1000;
+    const payload = JSON.stringify({ hash, expiresAt, mode });
     try {
       localStorage.setItem(LOCK_KEY, payload);
       try {
@@ -78,25 +132,38 @@ function setAuthed(hash) {
     } catch {
       /* 无痕等：降级为仅会话 */
     }
-  } else {
+    try {
+      sessionStorage.setItem(LOCK_KEY, payload);
+    } catch (e) {
+      const msg = e?.message || String(e);
+      throw new Error(
+        `无法保存登录状态（${msg}）。请关闭无痕/隐私模式，或在浏览器设置里允许本站使用“本地存储”，然后重试。`
+      );
+    }
+    return;
+  }
+
+  if (mode === "session") {
+    const expiresAt = Date.now() + 365 * 24 * 60 * 60 * 1000;
+    const payload = JSON.stringify({ hash, expiresAt, mode });
     try {
       localStorage.removeItem(LOCK_KEY);
     } catch {
       /* ignore */
     }
-  }
-
-  try {
-    sessionStorage.setItem(LOCK_KEY, payload);
-  } catch (e) {
-    const msg = e?.message || String(e);
-    throw new Error(
-      `无法保存登录状态（${msg}）。请关闭无痕/隐私模式，或在浏览器设置里允许本站使用“本地存储”，然后重试。`
-    );
+    try {
+      sessionStorage.setItem(LOCK_KEY, payload);
+    } catch (e) {
+      const msg = e?.message || String(e);
+      throw new Error(
+        `无法保存登录状态（${msg}）。请关闭无痕/隐私模式，或在浏览器设置里允许本站使用“本地存储”，然后重试。`
+      );
+    }
   }
 }
 
 function clearAuthed() {
+  volatileLoginHash = null;
   try {
     localStorage.removeItem(LOCK_KEY);
   } catch {
@@ -110,11 +177,18 @@ function clearAuthed() {
 }
 
 function isAuthed() {
-  const { passwordHash, authCacheDays } = getConfig();
-  const persist = authCacheDays > 0;
-  const raw = persist
-    ? readStoredAuth() || readSessionAuth()
-    : readSessionAuth();
+  const { passwordHash } = getConfig();
+  if (!passwordHash) return false;
+  const mode = resolveAuthMode();
+
+  if (mode === "every_visit") {
+    return volatileLoginHash === passwordHash;
+  }
+
+  const raw =
+    mode === "remember7"
+      ? readStoredAuth() || readSessionAuth()
+      : readSessionAuth();
   if (!raw) return false;
   try {
     const { hash, expiresAt } = JSON.parse(raw);
