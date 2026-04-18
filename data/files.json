@@ -17,6 +17,15 @@
       "note": "downloadUrl 可选：你想提供下载就填，不想就留空。",
       "previewUrl": "https://example.com/replace-with-your-onedrive-preview-link",
       "downloadUrl": "https://1drv.ms/f/c/142b9ce520d31418/IgC8MQr7L9uDRYlNS927KupfAY3vVpvmihOq8CsWbzDwHw0?e=X3kTOV"
+    },
+
+    {
+      "title": "测试 PDF",
+      "type": "pdf",
+      "tags": ["测试"],
+      "updatedAt": "2026-04-18",
+      "previewUrl": "https://1drv.ms/f/c/142b9ce520d31418/IgDjOCn9XT6-QbHycXh5UOIlAfd9szsH1SxiH1G7T82tSNc?e=0EGnvc",
+      "downloadUrl": ""
     }
   ]
 }
