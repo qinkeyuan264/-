@@ -325,8 +325,21 @@ function render(files) {
     : "没有匹配的文件。";
 }
 
+function updateAuthModeHint() {
+  const el = $("#authModeHint");
+  if (!el) return;
+  const mode = resolveAuthMode();
+  const map = {
+    every_visit: "每次刷新或重新进入网站都要输入密码（不写本地存储）",
+    session: "同一标签内免重复输入；关闭标签后通常需重登",
+    remember7: "7 天内免密（写入本机，约 7×24 小时）"
+  };
+  el.textContent = `当前登录策略（AUTH_MODE=${mode}）：${map[mode] || mode}`;
+}
+
 async function initApp() {
   applyAuthPolicy();
+  updateAuthModeHint();
 
   if (!isAuthed()) {
     showLock();

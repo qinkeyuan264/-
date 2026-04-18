@@ -28,7 +28,7 @@
         -webkit-overflow-scrolling: touch;
       }
     </style>
-    <link rel="stylesheet" href="./assets/style.css?v=7" />
+    <link rel="stylesheet" href="./assets/style.css?v=8" />
   </head>
   <body>
     <div id="appShell" class="shell" hidden>
@@ -86,13 +86,23 @@
 
         <div id="loginError" class="error" hidden>密码不正确，请重试。</div>
         <div class="lock__meta">
-          <div>默认密码：<code>changeme123</code>（建议部署后立即更换）</div>
-          <div class="muted">更换方式：打开“生成/更换密码哈希”，把哈希粘到 <code>assets/config.js</code>。</div>
+          <div id="authModeHint" class="auth-mode-hint">正在读取登录策略…</div>
+          <div class="muted">
+            若你刚改过 <code>assets/config.js</code> 却仍像旧版：请<strong>提交并推送</strong>到 GitHub，再<strong>强制刷新</strong>（Ctrl+Shift+R）。
+          </div>
+          <div class="muted">
+            切换模式：在 <code>config.js</code> 里设 <code>AUTH_MODE</code> 为
+            <code>every_visit</code>（每次密码）、<code>session</code>（本会话）或
+            <code>remember7</code>（7 天免密）。
+          </div>
+          <div class="muted">
+            修改密码：打开 <a class="link" href="./tools/hash.html" target="_blank" rel="noreferrer">生成密码哈希</a>，把哈希写入 <code>assets/config.js</code> 的 <code>PASSWORD_SHA256_HEX</code>。
+          </div>
         </div>
       </div>
     </div>
 
-    <script src="./assets/config.js?v=7"></script>
-    <script src="./assets/app.js?v=7" type="module"></script>
+    <script src="./assets/config.js?v=8"></script>
+    <script src="./assets/app.js?v=8" type="module"></script>
   </body>
 </html>

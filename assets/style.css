@@ -276,6 +276,15 @@ a{ color: inherit; }
   font-size: 12px;
   line-height: 1.6;
 }
+.auth-mode-hint{
+  color: var(--text);
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+.lock__meta .link{
+  color: var(--brand);
+  border-bottom-color: rgba(124,92,255,0.45);
+}
 .muted{ color: var(--muted); }
 .error{
   margin-top: 10px;
