@@ -48,6 +48,17 @@ a{ color: inherit; }
   flex-direction:column;
 }
 
+/* 重要：.shell 的 display:flex 会覆盖浏览器对 [hidden] 的默认 display:none，
+   未登录时主界面会错误显示在页面上方，锁屏被挤到下面。必须强制隐藏。 */
+#appShell[hidden],
+.shell[hidden]{
+  display: none !important;
+}
+
+#lockScreen[hidden]{
+  display: none !important;
+}
+
 .topbar{
   display:flex;
   align-items:center;
@@ -224,11 +235,16 @@ a{ color: inherit; }
 }
 
 .lock{
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
   min-height: 100%;
   display:flex;
   align-items:center;
   justify-content:center;
   padding: 28px 18px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 .lock__card{
   width: min(560px, 100%);
