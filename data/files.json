@@ -1,0 +1,22 @@
+{
+  "items": [
+    {
+      "title": "示例：我的简历",
+      "type": "pdf",
+      "tags": ["个人", "示例"],
+      "updatedAt": "2026-04-17",
+      "note": "把 previewUrl 替换成 OneDrive 的“可查看”链接。",
+      "previewUrl": "https://1drv.ms/f/c/142b9ce520d31418/IgC8MQr7L9uDRYlNS927KupfAY3vVpvmihOq8CsWbzDwHw0?e=X3kTOV",
+      "downloadUrl": ""
+    },
+    {
+      "title": "示例：工作记录表",
+      "type": "excel",
+      "tags": ["示例"],
+      "updatedAt": "2026-04-17",
+      "note": "downloadUrl 可选：你想提供下载就填，不想就留空。",
+      "previewUrl": "https://example.com/replace-with-your-onedrive-preview-link",
+      "downloadUrl": "https://1drv.ms/f/c/142b9ce520d31418/IgC8MQr7L9uDRYlNS927KupfAY3vVpvmihOq8CsWbzDwHw0?e=X3kTOV"
+    }
+  ]
+}
