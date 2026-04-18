@@ -2,7 +2,7 @@
 // 更换密码：打开 /tools/hash.html 生成哈希，替换 PASSWORD_SHA256_HEX。
 window.__SITE_CONFIG__ = {
   PASSWORD_SHA256_HEX:
-    "eea581a6b3e3433c1dd77b8714c24431196ee67761312e56f5596e314b2ae621",
+    "c8d588c54af28fbff6c32f0b65ae6798a85c84ca5c212a100ec0f997c80c2e8a",
 
   /**
    * 登录保持策略（三选一，改完需提交到 GitHub 并强刷页面）：
