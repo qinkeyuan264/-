@@ -5,7 +5,30 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="color-scheme" content="light dark" />
     <title>我的文件库</title>
-    <link rel="stylesheet" href="./assets/style.css?v=5" />
+    <!-- 在外链 CSS 加载前即生效，避免 .shell 覆盖 [hidden] 出现“未登录却看到主界面” -->
+    <style id="critical-auth-ui">
+      #appShell[hidden],
+      .shell[hidden] {
+        display: none !important;
+      }
+      #lockScreen[hidden] {
+        display: none !important;
+      }
+      .lock {
+        position: fixed;
+        inset: 0;
+        z-index: 1000;
+        box-sizing: border-box;
+        min-height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 28px 18px;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+      }
+    </style>
+    <link rel="stylesheet" href="./assets/style.css?v=6" />
   </head>
   <body>
     <div id="appShell" class="shell" hidden>
@@ -69,7 +92,7 @@
       </div>
     </div>
 
-    <script src="./assets/config.js?v=5"></script>
-    <script src="./assets/app.js?v=5" type="module"></script>
+    <script src="./assets/config.js?v=6"></script>
+    <script src="./assets/app.js?v=6" type="module"></script>
   </body>
 </html>

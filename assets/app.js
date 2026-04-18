@@ -1,6 +1,7 @@
 const $ = (sel) => document.querySelector(sel);
 
-const LOCK_KEY = "personal_file_site_auth_v1";
+/* v2：与旧 key 隔离，避免历史上写入的 localStorage 长期免密 */
+const LOCK_KEY = "personal_file_site_auth_v2";
 
 function hexFromBuffer(buffer) {
   const bytes = new Uint8Array(buffer);
@@ -19,9 +20,26 @@ function getConfig() {
   const cfg = window.__SITE_CONFIG__ || {};
   return {
     passwordHash: String(cfg.PASSWORD_SHA256_HEX || "").trim().toLowerCase(),
-    authCacheDays: Number.isFinite(cfg.AUTH_CACHE_DAYS) ? cfg.AUTH_CACHE_DAYS : 7,
+    /* 0 = 仅本次浏览器会话（关闭浏览器/新会话需重登）；>0 = 用 localStorage 免密若干天 */
+    authCacheDays: Number.isFinite(cfg.AUTH_CACHE_DAYS) ? cfg.AUTH_CACHE_DAYS : 0,
     filesJsonPath: String(cfg.FILES_JSON_PATH || "./data/files.json")
   };
+}
+
+/** 与配置一致：若选择“会话登录”，清掉可能残留的 localStorage，避免一打开就像已登录 */
+function applyAuthPolicy() {
+  const { authCacheDays } = getConfig();
+  if (authCacheDays > 0) return;
+  try {
+    localStorage.removeItem(LOCK_KEY);
+  } catch {
+    /* ignore */
+  }
+  try {
+    localStorage.removeItem("personal_file_site_auth_v1");
+  } catch {
+    /* ignore */
+  }
 }
 
 function readStoredAuth() {
@@ -42,14 +60,32 @@ function readSessionAuth() {
 
 function setAuthed(hash) {
   const { authCacheDays } = getConfig();
-  const expiresAt = Date.now() + Math.max(1, authCacheDays) * 24 * 60 * 60 * 1000;
-  const payload = JSON.stringify({ hash, expiresAt });
-  try {
-    localStorage.setItem(LOCK_KEY, payload);
-    return;
-  } catch {
-    /* 无痕模式等会禁止 localStorage，改用 sessionStorage */
+  const persist = authCacheDays > 0;
+  const expiresAt = persist
+    ? Date.now() + Math.max(1, authCacheDays) * 24 * 60 * 60 * 1000
+    : Date.now() + 365 * 24 * 60 * 60 * 1000;
+  const payload = JSON.stringify({ hash, expiresAt, persist });
+
+  if (persist) {
+    try {
+      localStorage.setItem(LOCK_KEY, payload);
+      try {
+        sessionStorage.removeItem(LOCK_KEY);
+      } catch {
+        /* ignore */
+      }
+      return;
+    } catch {
+      /* 无痕等：降级为仅会话 */
+    }
+  } else {
+    try {
+      localStorage.removeItem(LOCK_KEY);
+    } catch {
+      /* ignore */
+    }
   }
+
   try {
     sessionStorage.setItem(LOCK_KEY, payload);
   } catch (e) {
@@ -74,8 +110,11 @@ function clearAuthed() {
 }
 
 function isAuthed() {
-  const { passwordHash } = getConfig();
-  const raw = readStoredAuth() || readSessionAuth();
+  const { passwordHash, authCacheDays } = getConfig();
+  const persist = authCacheDays > 0;
+  const raw = persist
+    ? readStoredAuth() || readSessionAuth()
+    : readSessionAuth();
   if (!raw) return false;
   try {
     const { hash, expiresAt } = JSON.parse(raw);
@@ -213,6 +252,8 @@ function render(files) {
 }
 
 async function initApp() {
+  applyAuthPolicy();
+
   if (!isAuthed()) {
     showLock();
   } else {

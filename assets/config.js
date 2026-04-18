@@ -4,6 +4,8 @@
 window.__SITE_CONFIG__ = {
   PASSWORD_SHA256_HEX:
     "eea581a6b3e3433c1dd77b8714c24431196ee67761312e56f5596e314b2ae621",
-  AUTH_CACHE_DAYS: 7,
+  /* 0 = 仅本次浏览器会话内免再输密码（新开标签/关浏览器后需重登）
+     7 = 7 天内用 localStorage 免密（更像“记住我”） */
+  AUTH_CACHE_DAYS: 0,
   FILES_JSON_PATH: "./data/files.json",
 };
